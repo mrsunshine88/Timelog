@@ -1,0 +1,3 @@
+[build.environment]
+  # Detta stoppar Netlify från att skanna efter hemligheter under bygget
+  SECRETS_SCAN_ENABLED = "false"

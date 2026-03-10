@@ -1,0 +1,442 @@
+{
+  "entities": {
+    "Profile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Profile",
+      "type": "object",
+      "description": "Represents a user account within the TimeSync application, including personal, employment, and permission details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Profile entity, matching Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the profile was last updated.",
+          "format": "date-time"
+        },
+        "title": {
+            "type": "string",
+            "description": "The user's job title."
+        },
+        "employmentType": {
+            "type": "string",
+            "description": "The user's employment type.",
+            "enum": ["Tillsvidare", "Provanställning", "Visstidsanställning", "832-anställning"]
+        },
+        "workHoursType": {
+            "type": "string",
+            "description": "The user's work hours type.",
+            "enum": ["Heltid", "Deltid"]
+        },
+        "weeklyHours": {
+            "type": "number",
+            "description": "The number of hours the user is expected to work per week."
+        },
+        "employmentPercentage": {
+            "type": "number",
+            "description": "The user's employment percentage (e.g., 100 for full-time)."
+        },
+        "salaryType": {
+            "type": "string",
+            "description": "The user's salary type.",
+            "enum": ["Fast", "Timlön"]
+        },
+        "salaryValue": {
+            "type": "number",
+            "description": "The user's salary, either monthly or hourly depending on employment type."
+        },
+        "startDate": {
+            "type": "string",
+            "description": "The user's employment start date.",
+            "format": "date"
+        },
+        "endDate": {
+            "type": ["string", "null"],
+            "description": "The user's employment end date, if applicable.",
+            "format": "date"
+        },
+        "noticePeriod": {
+            "type": "string",
+            "description": "The notice period for the employment."
+        },
+        "workplace": {
+            "type": "string",
+            "description": "The primary workplace location."
+        },
+        "benefits": {
+            "type": "string",
+            "description": "Description of any employment benefits."
+        },
+        "vacationDays": {
+            "type": "number",
+            "description": "Total number of vacation days per year."
+        },
+        "collectiveAgreement": {
+            "type": "string",
+            "description": "Applicable collective agreement."
+        },
+        "insurances": {
+            "type": "string",
+            "description": "Applicable insurances."
+        },
+        "otherInfo": {
+            "type": "string",
+            "description": "Other relevant employment information."
+        },
+        "ssn": {
+            "type": "string",
+            "description": "The user's social security number."
+        },
+        "phone": {
+            "type": "string",
+            "description": "The user's phone number."
+        },
+        "address": {
+            "type": "string",
+            "description": "The user's street address."
+        },
+        "postalCode": {
+            "type": "string",
+            "description": "The user's postal code."
+        },
+        "city": {
+            "type": "string",
+            "description": "The user's city."
+        },
+        "employeeId": {
+            "type": "string",
+            "description": "The 5-digit employee ID, used as a username."
+        },
+        "isClockedIn": {
+            "type": "boolean",
+            "description": "Indicates if the user is currently clocked in."
+        },
+        "shiftStartTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The start time of the current active shift, if any."
+        },
+        "activeTimeEntryId": {
+            "type": "string",
+            "description": "The ID of the currently active time entry document."
+        },
+        "lastActivity": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the user's last activity (clock-in or clock-out) to track daily presence."
+        },
+        "permissions": {
+            "type": "object",
+            "description": "A map of boolean flags for user permissions.",
+            "properties": {
+                "viewLiveCost": {"type": "boolean"},
+                "viewAbsence": {"type": "boolean"},
+                "handleTimeReports": {"type": "boolean"},
+                "handleAbsence": {"type": "boolean"},
+                "handleUsers": {"type": "boolean"},
+                "approvePayroll": {"type": "boolean"},
+                "generateContracts": {"type": "boolean"},
+                "handlePermissions": {"type": "boolean"},
+                "editOwnTimes": {"type": "boolean"}
+            }
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt",
+        "employeeId"
+      ]
+    },
+    "Project": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Project",
+      "type": "object",
+      "description": "Represents a project against which users can log their time.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Project entity."
+        },
+        "profileId": {
+          "type": "string",
+          "description": "Reference to the Profile entity that owns this project. (Relationship: Profile 1:N Project)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the project."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the project."
+        },
+        "isActive": {
+          "type": "boolean",
+          "description": "Indicates if the project is currently active."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the project was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the project was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "profileId",
+        "name",
+        "isActive",
+        "createdAt"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents an individual task within a project for time tracking.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Reference to the Project entity to which this task belongs. (Relationship: Project 1:N Task)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the task."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the task (e.g., 'pending', 'in-progress', 'completed')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the task was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the task was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "name",
+        "status",
+        "createdAt"
+      ]
+    },
+    "TimeEntry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TimeEntry",
+      "type": "object",
+      "description": "Represents a single logged time session for a user on a specific task.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TimeEntry entity."
+        },
+        "profileId": {
+          "type": "string",
+          "description": "Reference to the Profile entity that created this time entry. (Relationship: Profile 1:N TimeEntry)"
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Reference to the Project entity associated with this time entry (via the task). (Relationship: Project 1:N TimeEntry)"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Reference to the Task entity for which time was logged. (Relationship: Task 1:N TimeEntry)"
+        },
+        "startTime": {
+          "type": "string",
+          "description": "The start date and time of the time entry.",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The end date and time of the time entry. Can be null if the entry is still ongoing.",
+          "format": "date-time"
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The duration of the time entry in minutes. Can be derived or explicitly stored."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or comments for the time entry."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the time entry was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the time entry was last updated.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the time entry.",
+          "enum": [
+            "Arbete",
+            "Sjuk",
+            "Sjukskriven",
+            "VAB",
+            "Semester",
+            "Permission",
+            "Tjänstledig",
+            "Ledig",
+            "Övrig frånvaro",
+            "Tom"
+          ]
+        },
+        "projectName": {
+          "type": "string",
+          "description": "Denormalized name of the project."
+        }
+      },
+      "required": [
+        "id",
+        "profileId",
+        "startTime",
+        "status"
+      ]
+    },
+    "CompanySettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CompanySettings",
+      "type": "object",
+      "description": "Stores global settings for the company, used for contract generation.",
+      "properties": {
+        "companyName": { "type": "string", "description": "The legal name of the company." },
+        "orgNumber": { "type": "string", "description": "The company's organization number." },
+        "address": { "type": "string", "description": "The company's street address." },
+        "postalCode": { "type": "string", "description": "The company's postal code." },
+        "city": { "type": "string", "description": "The company's city." },
+        "contactPerson": { "type": "string", "description": "The name of the contact person or signatory." },
+        "companyPhone": { "type": "string", "description": "The company's phone number." },
+        "companyEmail": { "type": "string", "description": "The company's email address.", "format": "email" },
+        "standardTerms": { "type": "string", "description": "Standard terms and conditions for employment contracts." }
+      }
+    },
+    "AdjustmentLog": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "AdjustmentLog",
+        "type": "object",
+        "description": "Records when an administrator manually adjusts a time entry.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the log entry." },
+            "adjustingUserId": { "type": "string", "description": "UID of the user who made the adjustment." },
+            "adjustingUserName": { "type": "string", "description": "Name of the user who made the adjustment." },
+            "action": { "type": "string", "description": "Description of the manual action, e.g., 'Manual Clock-In'." },
+            "originalTime": { "type": "string", "format": "date-time", "description": "The original, unadjusted time." },
+            "adjustedTime": { "type": "string", "format": "date-time", "description": "The new, manually adjusted time." },
+            "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the log entry was created." }
+        },
+        "required": ["adjustingUserId", "adjustingUserName", "action", "adjustedTime", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/profiles/{profileId}",
+        "definition": {
+          "entityName": "Profile",
+          "schema": {
+            "$ref": "#/backend/entities/Profile"
+          },
+          "description": "Stores user profile information, including personal details, employment terms, and permissions. The document ID `{profileId}` corresponds to the `request.auth.uid` of the authenticated user."
+        }
+      },
+      {
+        "path": "/profiles/{profileId}/projects/{projectId}",
+        "definition": {
+          "entityName": "Project",
+          "schema": {
+            "$ref": "#/backend/entities/Project"
+          },
+          "description": "Contains projects created by a specific user."
+        }
+      },
+      {
+        "path": "/profiles/{profileId}/projects/{projectId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks associated with a specific project, owned by a user."
+        }
+      },
+      {
+        "path": "/profiles/{profileId}/timeEntries/{timeEntryId}",
+        "definition": {
+          "entityName": "TimeEntry",
+          "schema": {
+            "$ref": "#/backend/entities/TimeEntry"
+          },
+          "description": "Records individual time log entries for a user."
+        }
+      },
+      {
+        "path": "/companySettings/main",
+        "definition": {
+            "entityName": "CompanySettings",
+            "schema": { "$ref": "#/backend/entities/CompanySettings" },
+            "description": "A singleton document to store company-wide settings for contract generation."
+        }
+      },
+      {
+        "path": "/adjustment_logs/{logId}",
+        "definition": {
+            "entityName": "AdjustmentLog",
+            "schema": { "$ref": "#/backend/entities/AdjustmentLog" },
+            "description": "Log of manual time adjustments made by users with permission."
+        }
+      }
+    ]
+  }
+}

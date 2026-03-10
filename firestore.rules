@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------
+    // Helper Functions
+    // --------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isSuperAdmin() {
+      return request.auth.token.email == '64112@timelog.app';
+    }
+
+    // Checks if the requesting user has a specific permission flag set to true in their profile.
+    function hasPermission(permission) {
+      let profilePath = /databases/$(database)/documents/profiles/$(request.auth.uid);
+      return exists(profilePath) &&
+             get(profilePath).data.permissions != null &&
+             get(profilePath).data.permissions[permission] == true;
+    }
+
+    // On user creation, ensures no permissions are granted by default.
+    function noElevatedPermissionsOnCreate() {
+        let p = request.resource.data.permissions;
+        return p == null || p.keys().size() == 0 || (
+               p.viewLiveCost == false &&
+               p.viewAbsence == false &&
+               p.handleTimeReports == false &&
+               p.handleAbsence == false &&
+               p.handleUsers == false &&
+               p.approvePayroll == false &&
+               p.generateContracts == false &&
+               p.handlePermissions == false &&
+               p.handleSchema == false &&
+               p.editOwnTimes == false
+        );
+    }
+    
+    // --------------------------------
+    // Collection Rules: /profiles
+    // --------------------------------
+    match /profiles/{profileId} {
+
+      // Read: A user can read their own profile. An admin with 'handleUsers' can read any profile.
+      allow read: if isOwner(profileId) || hasPermission('handleUsers') || isSuperAdmin();
+      
+      // Create: An admin with 'handleUsers' can create new profiles, but without elevated permissions.
+      allow create: if (hasPermission('handleUsers') || isSuperAdmin()) && noElevatedPermissionsOnCreate();
+      
+      // Update: A user can update their own profile (but not permissions unless they have 'handlePermissions').
+      // An admin with 'handleUsers' can update any profile.
+      allow update: if isSignedIn() && 
+        (
+            (isOwner(profileId) && (request.resource.data.permissions.diff(resource.data.permissions).affectedKeys().size() == 0 || hasPermission('handlePermissions'))) || 
+            hasPermission('handleUsers') || 
+            isSuperAdmin()
+        );
+
+      // Delete: Admins can delete users, but not the super admin account.
+      allow delete: if (hasPermission('handleUsers') || isSuperAdmin()) && get(/databases/$(database)/documents/profiles/$(profileId)).data.employeeId != '64112';
+      
+      // --- Sub-collections ---
+      match /projects/{projectId} {
+        // A user can manage their own projects. Admins with 'handleTimeReports' can also view/edit them.
+        allow read, write: if isOwner(profileId) || hasPermission('handleTimeReports') || isSuperAdmin();
+      }
+
+      match /tasks/{taskId} {
+         // A user can manage their own tasks. Admins with 'handleTimeReports' can also view/edit them.
+        allow read, write: if isOwner(profileId) || hasPermission('handleTimeReports') || isSuperAdmin();
+      }
+
+      match /timeEntries/{timeEntryId} {
+        // A user can read/create their own time entries. Admins with 'handleTimeReports' can read/create for any user.
+        allow read, create: if isOwner(profileId) || hasPermission('handleTimeReports') || isSuperAdmin();
+
+        // A user can update/delete their own entries ONLY if they have 'editOwnTimes'.
+        // Admins with 'handleTimeReports' can manage any entry.
+        allow update, delete: if (isOwner(profileId) && hasPermission('editOwnTimes')) || hasPermission('handleTimeReports') || isSuperAdmin();
+      }
+
+      match /schedules/{scheduleId} {
+        // A user can read their own schedule. An admin with 'handleSchema' can read anyone's.
+        allow read: if isOwner(profileId) || hasPermission('handleSchema') || isSuperAdmin();
+        // Only admin with 'handleSchema' permission can write schedules.
+        allow write: if hasPermission('handleSchema') || isSuperAdmin();
+      }
+    }
+    
+    // --------------------------------
+    // Collection Rules: /companySettings
+    // --------------------------------
+    match /companySettings/main {
+        // Only admins who can generate contracts can read/write company settings.
+        allow read, write: if hasPermission('generateContracts') || isSuperAdmin();
+    }
+
+    // --------------------------------
+    // Collection Rules: /adjustment_logs
+    // --------------------------------
+    match /adjustment_logs/{logId} {
+        // Users who can edit their own time can create adjustment logs.
+        allow create: if hasPermission('editOwnTimes');
+        // Only admins who manage users can review the adjustment logs.
+        allow read: if hasPermission('handleUsers');
+        // Logs are immutable.
+        allow update, delete: if false;
+    }
+  }
+}
