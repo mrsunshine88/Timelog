@@ -45,6 +45,16 @@ export async function DELETE(
           { status: 200 } // We can consider this a success since the end-goal is reached
         );
     }
+    
+    // Check if the service account credentials are missing (local dev issue)
+    if (error.code === 'app/invalid-credential' || 
+        (error.message && error.message.includes('Project Id')) || 
+        (error.message && error.message.includes('default credentials'))) {
+        return NextResponse.json(
+          { error: 'Kunde inte radera kontot', details: 'Din lokala utvecklingsmiljö saknar behörighet (Service Account) för att radera användare permanent från servern. Kontot är kvar i Firebase Auth, radera det manuellt i Firebase Console.' },
+          { status: 500 }
+        );
+    }
 
     return NextResponse.json(
       { error: 'Internal Server Error', details: error.message },

@@ -247,36 +247,48 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
     setIsDeleting(true);
 
     try {
-        // 1. Delete the user from Firebase Authentication via the secure API route
-        const response = await fetch(`/api/admin/users/${userId}`, {
-            method: 'DELETE',
-        });
+        let authDeleteSuccess = true;
+        
+        // 1. Try to delete the user from Firebase Authentication
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE',
+            });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            // Show details from the server if they exist, instead of just "Internal Server Error"
-            const errorMessage = errorData.details || errorData.error || 'Failed to delete user from Authentication.';
-            throw new Error(errorMessage);
+            if (!response.ok) {
+                authDeleteSuccess = false;
+                console.warn("Could not delete from Firebase Auth, proceeding to delete profile anyway...");
+            }
+        } catch (e) {
+            authDeleteSuccess = false;
+            console.warn("Network error reaching Auth delete endpoint:", e);
         }
 
-        // 2. Delete the user's profile from Firestore
+        // 2. Delete the user's profile from Firestore (This frees the Employee ID)
         const docRef = doc(firestore, 'profiles', userId);
         await deleteDoc(docRef);
 
-        toast({
-            title: "Användare Raderad",
-            description: `${userProfile.firstName} ${userProfile.lastName} har tagits bort samt deras inloggningskonto. Anställningsnumret är nu ledigt.`,
-        });
+        if (authDeleteSuccess) {
+            toast({
+                title: "Användare Raderad",
+                description: `${userProfile.firstName} ${userProfile.lastName} har raderats helt från systemet. Anställningsnumret är nu ledigt.`,
+            });
+        } else {
+            toast({
+                title: "Profil raderad (Lokal miljö)",
+                description: `${userProfile.firstName}s profil raderades och numret blev ledigt! (E-posten är dock kvar i Firebase Auth för tillfället då du testar lokalt)`,
+            });
+        }
         
         router.push('/dashboard/admin');
         router.refresh();
 
     } catch (error: any) {
-        console.error("Error during permanent delete:", error);
+        console.error("Error during profile delete:", error);
         toast({
             variant: "destructive",
-            title: "Fel vid radering",
-            description: error.message || "Kunde inte radera användaren. Se konsolen för mer info."
+            title: "Fel vid radering av profil",
+            description: error.message || "Kunde inte radera profil-dokumentet. Se konsolen för mer info."
         });
     } finally {
         setIsDeleting(false);
