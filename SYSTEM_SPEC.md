@@ -181,6 +181,23 @@ Utöver databasreglerna styr användarens `permissions`-objekt exakt *vilka* kna
 
 ---
 
+## 8. Särskilda Applikationsfunktioner
+
+### 8.1 "832 Anställning" (Timanställningar)
+För att stödja hantering av timanställda har systemet implementerat specifik logik i samband med anställningsformen "832-anställning" samt när en användare har "Timlön". Detta påverkar följande avsnitt:
+*   **Mina Sidor / Månadssammanställning:** Månatlig "normtid" (ofta baserad på 176h / 100%) döljs. Istället för en fast grundlön beräknar och visar systemet automatiskt den ackumulerade intjänade bruttolönen (`arbetade timmar * timlön`).
+*   **Användarredigering:** Döljer och inaktiverar inmatningsfälten för `Antal timmar/vecka` och `Sysselsättningsgrad (%)` eftersom de arbetar vid behov. 
+*   **Lönehantering (Admin):** Avaktiverar kravet att användaren måste ha uppnått månadens fulla arbetstimmar innan lönen kan godkännas. Avkryssningsrutan blir därmed alltid synlig och klickbar.
+*   **Avtalsgenerator (PDF):** Avtalsgeneratorn anpassar formatet för 832-anställningar: Timlön formateras med "kr / timme", sysselsättningsgrad fylls i som "Vid behov", kryssrutan "832 Anställning" kryssas istället för Deltid och Semesterersättningen skrivs som en löpande klarspråkstext "12% på intjänad lön".
+
+### 8.2 Progressive Web App (PWA)
+Timelog är konfigurerad som en Progressive Web App för att tillåta nedladdning och "app-liknande" integration på mobila och desktop-enheter:
+*   **Manifest & Ikoner:** Filen `public/manifest.json` deklarerar att appen ska starta `/dashboard/live` med parametern `display: standalone`. Applikationen nyttjar genererade appikoner för iOS och Android (192x192 och 512x512).
+*   **iOS Specifika Optimeringar:** Filen `src/app/layout.tsx` omsluter appleWebApp-metataggar för stildisplay (`apple-mobile-web-app-status-bar-style`) och startikoner för iPhone/iPad.
+*   **Installationsguide (PwaPrompt):** En global UI-Notis guidar användaren att installera appen. På Android fångas app-händelsen `beforeinstallprompt` för en enkel "Installera"-knapp. På iOS (genom Safari) flaggas istället en manuell hjälptext som pekar mot Safaris delnings-ikon -> "Lägg till på hemskärmen".
+
+---
+
 ## Appendix A: Firestore Rules Source
 
 ```rules

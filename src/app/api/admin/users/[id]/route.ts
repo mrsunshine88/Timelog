@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminAuth } from '@/lib/firebase-admin';
+import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
 
 export async function DELETE(
   request: Request,
@@ -78,12 +78,48 @@ export async function PATCH(
         return NextResponse.json({ error: 'User ID and password are required' }, { status: 400 });
       }
   
-      if (!adminAuth) {
+      if (!adminAuth || !adminFirestore) {
         return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
       }
   
-      await adminAuth.updateUser(userId, { password });
-      await adminAuth.revokeRefreshTokens(userId);
+      try {
+        await adminAuth.updateUser(userId, { password });
+        await adminAuth.revokeRefreshTokens(userId);
+      } catch (authError: any) {
+        if (authError.code === 'auth/user-not-found') {
+          // Användaren finns inte i Auth. Återskapa kontot med data från Firestore
+          const userDoc = await adminFirestore.collection('profiles').doc(userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            if (userData && userData.employeeId) {
+              const authEmail = `${userData.employeeId}@timelog.app`;
+              await adminAuth.createUser({
+                uid: userId,
+                email: authEmail,
+                password: password,
+              });
+            } else {
+              throw new Error('Användaren saknar anställningsnummer i databasen.');
+            }
+          } else {
+            throw new Error('Användaren finns inte i databasen.');
+          }
+        } else if (
+          authError.code === 'app/invalid-credential' ||
+          (authError.message && authError.message.includes('Project Id')) ||
+          (authError.message && authError.message.includes('default credentials'))
+        ) {
+          return NextResponse.json(
+            {
+              error: 'Kunde inte uppdatera lösenordet',
+              details: 'Din lokala miljö saknar utvecklingsbehörigheter.',
+            },
+            { status: 500 }
+          );
+        } else {
+          throw authError; // Kasta vidare andra obekanta fel
+        }
+      }
   
       return NextResponse.json({ message: 'User password updated successfully' }, { status: 200 });
     } catch (error: any) {

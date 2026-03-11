@@ -241,7 +241,15 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
                     body: JSON.stringify({ password: values.password }),
                 });
                 if (!patchRes.ok) {
-                    throw new Error("Kunde inte uppdatera lösenordet i inloggningssystemet.");
+                    const errorData = await patchRes.json().catch(() => null);
+                    if (errorData?.details?.includes('utvecklingsbehörigheter')) {
+                        toast({ 
+                            title: "Lokal miljö", 
+                            description: "Profilen uppdaterades men lösenordet kunde inte ändras i Firebase Auth (saknar lokala rättigheter)."
+                        });
+                    } else {
+                        throw new Error(errorData?.error || "Kunde inte uppdatera lösenordet i inloggningssystemet.");
+                    }
                 }
             }
 
@@ -427,13 +435,29 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
                     <FormField control={form.control} name="weeklyHours" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Antal timmar/vecka</FormLabel>
-                            <FormControl><Input type="number" placeholder="40" {...field} value={field.value ?? ''} /></FormControl>
+                            <FormControl>
+                                <Input 
+                                    type="number" 
+                                    placeholder="40" 
+                                    {...field} 
+                                    value={form.watch('employmentType') === '832-anställning' ? '' : (field.value ?? '')} 
+                                    disabled={form.watch('employmentType') === '832-anställning'}
+                                />
+                            </FormControl>
                         </FormItem>
                     )} />
                     <FormField control={form.control} name="employmentPercentage" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Sysselsättningsgrad (%)</FormLabel>
-                            <FormControl><Input type="number" placeholder="100" {...field} value={field.value ?? ''} /></FormControl>
+                            <FormControl>
+                                <Input 
+                                    type="number" 
+                                    placeholder="100" 
+                                    {...field} 
+                                    value={form.watch('employmentType') === '832-anställning' ? '' : (field.value ?? '')} 
+                                    disabled={form.watch('employmentType') === '832-anställning'}
+                                />
+                            </FormControl>
                         </FormItem>
                     )} />
                 </div>

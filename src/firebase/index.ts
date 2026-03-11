@@ -17,11 +17,8 @@ export function initializeFirebase() {
       // Attempt to initialize via Firebase App Hosting environment variables
       firebaseApp = initializeApp();
     } catch (e) {
-      // Only warn in production because it's normal to use the firebaseConfig to initialize
-      // during development
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
+      // Fallback till lokala config-objektet om App Hosting variabler saknas.
+      // Konsol-varningen är borttagen för att undvika bruset "app/no-options".
       firebaseApp = initializeApp(firebaseConfig);
     }
 

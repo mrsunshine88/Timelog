@@ -74,7 +74,7 @@ export function SchemaView() {
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || isAuthLoading) return null;
     if (canHandleSchema) {
-      return query(collection(firestore, 'profiles'));
+      return query(collection(firestore, 'profiles'), where('status', '!=', 'Inactive'));
     }
     if (currentUserProfile) {
       return query(collection(firestore, 'profiles'), where('__name__', '==', currentUserProfile.id));

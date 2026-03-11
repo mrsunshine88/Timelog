@@ -99,9 +99,14 @@ export const generateContract = async (employee: UserProfile, company: CompanySe
     doc.setTextColor(100);
     doc.text('Arbetstid', margin, currentY - 4);
     doc.setFont('Helvetica', 'normal');
-    drawCheckbox(margin, currentY, 'Heltid', employee.workHoursType === 'Heltid');
-    drawCheckbox(margin + 120, currentY, 'Deltid', employee.workHoursType === 'Deltid');
-    if (employee.workHoursType === 'Deltid' || employee.employmentPercentage) {
+    drawCheckbox(margin, currentY, 'Heltid', employee.workHoursType === 'Heltid' && employee.employmentType !== '832-anställning');
+    
+    // Byt ut Deltid mot 832 Anställning i PDF:en för att matcha anställningsformen
+    drawCheckbox(margin + 120, currentY, '832 Anställning', employee.employmentType === '832-anställning');
+    
+    if (employee.employmentType === '832-anställning') {
+        drawField(margin + 240, currentY, 150, 'Sysselsättningsgrad', 'Vid behov');
+    } else if (employee.workHoursType === 'Deltid' || employee.employmentPercentage) {
         drawField(margin + 240, currentY, 150, 'Sysselsättningsgrad', `${employee.employmentPercentage ?? ''}%`);
     }
     currentY += 35;
@@ -116,10 +121,24 @@ export const generateContract = async (employee: UserProfile, company: CompanySe
     drawField(margin + 350, currentY, contentWidth - 350, 'Uppsägningstid', noticePeriodStr);
     currentY += 35;
     
-    const salaryString = (employee.salaryValue != null) ? `${employee.salaryValue.toLocaleString('sv-SE')} kr` : '';
+    let salaryString = '';
+    if (employee.salaryValue != null) {
+        if (employee.salaryType === 'Timlön' || employee.employmentType === '832-anställning') {
+            salaryString = `${employee.salaryValue.toLocaleString('sv-SE')} kr / timme`;
+        } else {
+            salaryString = `${employee.salaryValue.toLocaleString('sv-SE')} kr`;
+        }
+    }
     drawField(margin, currentY, 250, 'Lön', salaryString);
-    const vacationStr = (employee.vacationDays != null && employee.vacationDays != undefined) ? `${employee.vacationDays} dagar` : '';
-    drawField(margin + 260, currentY, contentWidth - 260, 'Semesterdagar (per år)', vacationStr);
+    
+    let vacationStr = '';
+    if (employee.employmentType === '832-anställning' || employee.salaryType === 'Timlön') {
+        vacationStr = 'Semesterersättning utgår med 12% på intjänad lön';
+        drawField(margin + 260, currentY, contentWidth - 260, 'Semester', vacationStr);
+    } else {
+        vacationStr = (employee.vacationDays != null && employee.vacationDays != undefined) ? `${employee.vacationDays} dagar` : '';
+        drawField(margin + 260, currentY, contentWidth - 260, 'Semesterdagar (per år)', vacationStr);
+    }
     currentY += 35;
 
     drawField(margin, currentY, 250, 'Tillämpligt kollektivavtal', employee.collectiveAgreement || '');

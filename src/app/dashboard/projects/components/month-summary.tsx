@@ -9,8 +9,18 @@ interface MonthSummaryProps {
 }
 
 export function MonthSummary({ summary, profile }: MonthSummaryProps) {
-  const salaryDisplay = profile.salaryValue ? `${profile.salaryValue.toLocaleString('sv-SE')} kr` : '-';
-  const salaryType = profile.salaryType ? ` (${profile.salaryType})` : '';
+  const isHourly = profile.employmentType === '832-anställning' || profile.salaryType === 'Timlön';
+  const earnedSalary = isHourly && profile.salaryValue 
+      ? summary.workedHours * profile.salaryValue 
+      : null;
+
+  const salaryDisplay = earnedSalary != null 
+      ? `${earnedSalary.toLocaleString('sv-SE', { maximumFractionDigits: 0 })} kr`
+      : profile.salaryValue ? `${profile.salaryValue.toLocaleString('sv-SE')} kr` : '-';
+      
+  const salaryType = earnedSalary != null 
+      ? ' (tjänat hittills)' 
+      : profile.salaryType ? ` (${profile.salaryType})` : '';
   
   const isNegativeDiff = summary.timeDiff < 0;
 
@@ -28,10 +38,17 @@ export function MonthSummary({ summary, profile }: MonthSummaryProps) {
                   <Clock className="h-4 w-4 text-primary" />
                </div>
                <div>
-                  <div className="text-2xl font-bold">{summary.workedHours.toFixed(1)} <span className="text-sm font-normal text-muted-foreground">/ {summary.monthNorm.toFixed(1)} h</span></div>
-                  <p className={`text-xs mt-1 ${isNegativeDiff ? 'text-destructive' : 'text-emerald-500'}`}>
-                     {summary.timeDiff > 0 ? '+' : ''}{summary.timeDiff.toFixed(1)} h diff mot normaltid
-                  </p>
+                  <div className="text-2xl font-bold">
+                    {summary.workedHours.toFixed(1)}
+                    {!isHourly && (
+                        <span className="text-sm font-normal text-muted-foreground"> / {summary.monthNorm.toFixed(1)} h</span>
+                    )}
+                  </div>
+                  {!isHourly && (
+                    <p className={`text-xs mt-1 ${isNegativeDiff ? 'text-destructive' : 'text-emerald-500'}`}>
+                        {summary.timeDiff > 0 ? '+' : ''}{summary.timeDiff.toFixed(1)} h diff mot normaltid
+                    </p>
+                  )}
                </div>
             </CardContent>
          </Card>
@@ -79,7 +96,7 @@ export function MonthSummary({ summary, profile }: MonthSummaryProps) {
                <div>
                   <div className="text-2xl font-bold">{salaryDisplay}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                     Grundlön
+                     {isHourly ? 'Bruttolön' : 'Grundlön'}
                   </p>
                </div>
             </CardContent>

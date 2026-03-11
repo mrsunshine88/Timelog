@@ -176,7 +176,9 @@ export default function LivePage() {
                 if (entry.endTime) {
                     end = new Date(entry.endTime);
                 } else if (isOngoing) {
-                    end = (date.to && date.to < now) ? date.to : now;
+                    const fromDate = date?.from || now;
+                    const normalizedEnd = endOfDay(date?.to || fromDate);
+                    end = (normalizedEnd < now) ? normalizedEnd : now;
                 }
                 const diff = differenceInMinutes(end, start);
                 if (diff > 0) {
@@ -264,7 +266,7 @@ export default function LivePage() {
                         <CardDescription>
                              {canViewCost
                                 ? 'Personal som har arbetat inom det valda intervallet.'
-                                : 'Personal som är aktiv idag.'
+                                : 'Personal som är aktiv idag. Här syns endast pågående arbetspass för dagen.'
                             }
                         </CardDescription>
                     </CardHeader>

@@ -107,6 +107,7 @@ const calculatePayrollDataForUser = (user: UserProfile, entries: FirestoreTimeEn
   const totalAbsenceHours = sickHours + vabHours + (vacationDays * 8) + otherAbsenceHours;
   const totalAccountedHours = workedHours + totalAbsenceHours;
   const overtime = Math.max(0, workedHours - monthNorm);
+  const isHourly = user.employmentType === '832-anställning' || user.salaryType === 'Timlön';
 
   return {
     userId: user.id,
@@ -121,7 +122,7 @@ const calculatePayrollDataForUser = (user: UserProfile, entries: FirestoreTimeEn
     otherAbsenceHours,
     overtime: parseFloat(overtime.toFixed(2)),
     totalTime: parseFloat(totalAccountedHours.toFixed(2)),
-    isReadyForApproval: totalAccountedHours >= monthNorm,
+    isReadyForApproval: isHourly ? true : totalAccountedHours >= monthNorm,
   };
 };
 
@@ -137,7 +138,7 @@ export function PayrollManagement() {
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'profiles'));
+    return query(collection(firestore, 'profiles'), where('status', '!=', 'Inactive'));
   }, [firestore]);
 
   const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
