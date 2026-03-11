@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditUserPage({ params }: { params: { id: string } }) {
-  const isNew = params.id === 'new';
+export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const isNew = resolvedParams.id === 'new';
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-4xl mx-auto">
@@ -24,7 +25,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
                 </p>
             </div>
         </div>
-      <UserEditForm userId={isNew ? undefined : params.id} />
+      <UserEditForm userId={isNew ? undefined : resolvedParams.id} />
     </div>
   );
 }
