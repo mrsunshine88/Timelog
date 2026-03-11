@@ -71,37 +71,37 @@ const permissionsList = [
 const profileSchema = z.object({
   // System
   employeeId: z.string().regex(/^\d{5}$/, 'Anställningsnummer måste vara 5 siffror.'),
-  email: z.string().email('Ogiltig e-postadress.').optional().or(z.literal('')),
+  email: z.preprocess((val) => val === "" ? null : val, z.string().email('Ogiltig e-postadress.').nullable().optional()),
   password: z.string().optional(),
   
   // Anställning
-  title: z.string().optional().nullable(),
+  title: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
   employmentType: z.string().nullable(),
   workHoursType: z.string().nullable(),
   weeklyHours: z.preprocess((val) => (val === "" || val === null || val === undefined) ? null : Number(val), z.number().nullable().optional()),
   employmentPercentage: z.preprocess((val) => (val === "" || val === null || val === undefined) ? null : Number(val), z.number().nullable().optional()),
-  startDate: z.string().optional().nullable(),
-  endDate: z.string().optional().nullable(),
-  noticePeriod: z.string().optional().nullable(),
-  workplace: z.string().optional().nullable(),
+  startDate: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  endDate: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  noticePeriod: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  workplace: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
   
   // Lön & Förmåner
   salaryType: z.string().nullable(),
   salaryValue: z.preprocess((val) => (val === "" || val === null || val === undefined) ? null : Number(val), z.number().nullable().optional()),
-  benefits: z.string().optional().nullable(),
+  benefits: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
   vacationDays: z.preprocess((val) => (val === "" || val === null || val === undefined) ? null : Number(val), z.number().nullable().optional()),
-  collectiveAgreement: z.string().optional().nullable(),
-  insurances: z.string().optional().nullable(),
-  otherInfo: z.string().optional().nullable(),
+  collectiveAgreement: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  insurances: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  otherInfo: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
 
   // Personuppgifter
   firstName: z.string().min(1, 'Förnamn är obligatoriskt.'),
   lastName: z.string().min(1, 'Efternamn är obligatoriskt.'),
-  ssn: z.string().optional().nullable(),
-  phone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
-  postalCode: z.string().optional().nullable(),
-  city: z.string().optional().nullable(),
+  ssn: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  phone: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  address: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  postalCode: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
+  city: z.preprocess((val) => val === "" ? null : val, z.string().nullable().optional()),
 
   // Behörigheter
   permissions: z.object({
