@@ -254,7 +254,9 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Failed to delete user from Authentication.');
+            // Show details from the server if they exist, instead of just "Internal Server Error"
+            const errorMessage = errorData.details || errorData.error || 'Failed to delete user from Authentication.';
+            throw new Error(errorMessage);
         }
 
         // 2. Delete the user's profile from Firestore
