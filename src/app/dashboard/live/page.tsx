@@ -276,7 +276,7 @@ export default function LivePage() {
                                 <TooltipProvider key={user.id} delayDuration={100}>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <div className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-default">
+                                            <button type="button" className="w-full text-left flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 focus-visible:bg-muted/50 transition-colors">
                                                 <div className="flex items-center gap-4">
                                                      {(canHandleTimeReports || canHandleUsers) && (
                                                         <div className="flex items-center gap-1">
@@ -303,7 +303,7 @@ export default function LivePage() {
                                                     </Avatar>
                                                     <p className="font-medium">{user.firstName} {user.lastName}</p>
                                                 </div>
-                                            </div>
+                                            </button>
                                         </TooltipTrigger>
                                         {canViewCost && (
                                             <TooltipContent>
