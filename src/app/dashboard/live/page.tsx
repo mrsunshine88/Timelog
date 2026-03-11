@@ -14,6 +14,8 @@ import { collection, query, getDocs, where } from 'firebase/firestore';
 import Link from 'next/link';
 import { DateRange } from 'react-day-picker';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 const calculateHourlyRate = (user: UserProfile, monthlyWorkHours: number): number => {
@@ -53,6 +55,7 @@ export default function LivePage() {
     // An admin has at least one permission that is not the user-level 'editOwnTimes' permission.
     const hasGenericAdminAccess = currentUserProfile && Object.entries(currentUserProfile.permissions ?? {}).some(([key, value]) => key !== 'editOwnTimes' && value === true);
     const hasAdminAccess = isSuperAdmin || hasGenericAdminAccess;
+    const isMobile = useIsMobile();
 
 
     useEffect(() => {
@@ -272,50 +275,74 @@ export default function LivePage() {
                     </CardHeader>
                     <CardContent className="space-y-2">
                         {periodUsers.length > 0 ? (
-                            periodUsers.map(user => (
-                                <TooltipProvider key={user.id} delayDuration={100}>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <button type="button" className="w-full text-left flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 focus-visible:bg-muted/50 transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                     {(canHandleTimeReports || canHandleUsers) && (
-                                                        <div className="flex items-center gap-1">
-                                                            {canHandleTimeReports && (
-                                                                <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                                                    <Link href={`/dashboard/projects?userId=${user.id}`} onClick={(e) => e.stopPropagation()}>
-                                                                        <CalendarClock className="h-4 w-4" />
-                                                                        <span className="sr-only">Justera tid</span>
-                                                                    </Link>
-                                                                </Button>
-                                                            )}
-                                                            {canHandleUsers && (
-                                                                <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                                                    <Link href={`/dashboard/admin/users/${user.id}`} onClick={(e) => e.stopPropagation()}>
-                                                                        <User className="h-4 w-4" />
-                                                                        <span className="sr-only">Redigera användare</span>
-                                                                    </Link>
-                                                                </Button>
-                                                            )}
-                                                        </div>
+                            periodUsers.map(user => {
+                                const buttonContent = (
+                                    <button type="button" className="w-full text-left flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 focus-visible:bg-muted/50 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                             {(canHandleTimeReports || canHandleUsers) && (
+                                                <div className="flex items-center gap-1">
+                                                    {canHandleTimeReports && (
+                                                        <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                            <Link href={`/dashboard/projects?userId=${user.id}`} onClick={(e) => e.stopPropagation()}>
+                                                                <CalendarClock className="h-4 w-4" />
+                                                                <span className="sr-only">Justera tid</span>
+                                                            </Link>
+                                                        </Button>
                                                     )}
-                                                    <Avatar className="h-9 w-9">
-                                                        <AvatarFallback>{`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()}</AvatarFallback>
-                                                    </Avatar>
-                                                    <p className="font-medium">{user.firstName} {user.lastName}</p>
+                                                    {canHandleUsers && (
+                                                        <Button asChild variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground">
+                                                            <Link href={`/dashboard/admin/users/${user.id}`} onClick={(e) => e.stopPropagation()}>
+                                                                <User className="h-4 w-4" />
+                                                                <span className="sr-only">Redigera användare</span>
+                                                            </Link>
+                                                        </Button>
+                                                    )}
                                                 </div>
-                                            </button>
-                                        </TooltipTrigger>
-                                        {canViewCost && (
+                                            )}
+                                            <Avatar className="h-9 w-9">
+                                                <AvatarFallback>{`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                            <p className="font-medium">{user.firstName} {user.lastName}</p>
+                                        </div>
+                                    </button>
+                                );
+
+                                if (!canViewCost) {
+                                    return <div key={user.id}>{buttonContent}</div>;
+                                }
+
+                                if (isMobile) {
+                                    return (
+                                        <Popover key={user.id}>
+                                            <PopoverTrigger asChild>
+                                                {buttonContent}
+                                            </PopoverTrigger>
+                                            <PopoverContent side="bottom" align="start" className="w-auto p-3 outline-none">
+                                                <PeriodUserTooltipContent 
+                                                    totalHours={user.totalHoursInRange}
+                                                    totalCost={user.costInRange}
+                                                />
+                                            </PopoverContent>
+                                        </Popover>
+                                    );
+                                }
+
+                                return (
+                                    <TooltipProvider key={user.id} delayDuration={100}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                {buttonContent}
+                                            </TooltipTrigger>
                                             <TooltipContent>
                                                 <PeriodUserTooltipContent 
                                                     totalHours={user.totalHoursInRange}
                                                     totalCost={user.costInRange}
                                                 />
                                             </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                </TooltipProvider>
-                            ))
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                );
+                            })
                         ) : (
                             <p className="text-muted-foreground p-2">Ingen aktivitet i det valda intervallet.</p>
                         )}
