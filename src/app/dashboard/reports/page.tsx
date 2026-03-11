@@ -126,7 +126,7 @@ export default function ReportsPage() {
   });
 
   return (
-      <div className="flex flex-1 items-center justify-center p-4">
+      <div className="flex flex-1 items-center justify-center p-4 max-w-7xl mx-auto w-full">
         <Card className="w-full max-w-md text-center shadow-sm p-8">
           <div className="flex flex-col items-center justify-center space-y-8">
             <div className='space-y-2'>

@@ -15,9 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, UserPlus, Loader2, AlertCircle } from 'lucide-react';
+import { Pencil, UserPlus, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useCollection, useFirebase, useMemoFirebase, useUser } from '@/firebase';
 import type { UserProfile } from '@/lib/types';
@@ -46,6 +52,9 @@ export function UserManagement() {
     }
     return [...users].sort((a, b) => (a.firstName + a.lastName).localeCompare(b.firstName + b.lastName));
   }, [users]);
+
+  const activeUsers = useMemo(() => sortedUsers.filter(u => u.status !== 'Inactive'), [sortedUsers]);
+  const inactiveUsers = useMemo(() => sortedUsers.filter(u => u.status === 'Inactive'), [sortedUsers]);
 
 
   if (isAuthLoading) {
@@ -114,43 +123,94 @@ export function UserManagement() {
                 <div className="flex justify-center items-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-            ) : sortedUsers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Namn</TableHead>
-                    <TableHead>Användar-ID</TableHead>
-                    <TableHead>Roll</TableHead>
-                    <TableHead className="text-right">Åtgärder</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">
-                        {user.firstName} {user.lastName}
-                      </TableCell>
-                      <TableCell>{user.employeeId}</TableCell>
-                      <TableCell>
-                        <Badge variant={Object.values(user.permissions || {}).some(p => p) || user.employeeId === '64112' ? 'default' : 'secondary'}>
-                          {Object.values(user.permissions || {}).some(p => p) || user.employeeId === '64112' ? 'Admin' : 'User'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" asChild>
-                            <Link href={`/dashboard/admin/users/${user.id}`}>
-                                <Pencil className="h-4 w-4" />
-                            </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
             ) : (
-                <div className="p-4 text-center text-sm text-muted-foreground border-dashed border-2 rounded-md">
-                    Inga användare har skapats ännu.
-                </div>
+                <Tabs defaultValue="active" className="space-y-4">
+                  <TabsList className="flex-wrap h-auto justify-start">
+                    <TabsTrigger value="active">Aktiv Personal ({activeUsers.length})</TabsTrigger>
+                    <TabsTrigger value="inactive">Inaktiva Konton ({inactiveUsers.length})</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="active" className="space-y-4">
+                    {activeUsers.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Namn</TableHead>
+                              <TableHead>Användar-ID</TableHead>
+                              <TableHead>Roll</TableHead>
+                              <TableHead className="text-right">Åtgärder</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {activeUsers.map((user) => (
+                              <TableRow key={user.id}>
+                                <TableCell className="font-medium">
+                                  {user.firstName} {user.lastName}
+                                </TableCell>
+                                <TableCell>{user.employeeId}</TableCell>
+                                <TableCell>
+                                  <Badge variant={Object.values(user.permissions || {}).some(p => p) || user.employeeId === '64112' ? 'default' : 'secondary'}>
+                                    {Object.values(user.permissions || {}).some(p => p) || user.employeeId === '64112' ? 'Admin' : 'User'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="ghost" size="icon" asChild>
+                                      <Link href={`/dashboard/admin/users/${user.id}`}>
+                                          <Pencil className="h-4 w-4" />
+                                      </Link>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground border-dashed border-2 rounded-md">
+                            Inga aktiva användare.
+                        </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="inactive" className="space-y-4">
+                    {inactiveUsers.length > 0 ? (
+                       <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Användar-ID</TableHead>
+                              <TableHead className="text-right">Åtgärder</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {inactiveUsers.map((user) => (
+                              <TableRow key={user.id}>
+                                <TableCell className="font-medium text-muted-foreground italic">
+                                  {user.firstName} {user.lastName}
+                                </TableCell>
+                                <TableCell>{user.employeeId}</TableCell>
+                                <TableCell className="text-right">
+                                  <Button variant="outline" size="sm" asChild>
+                                      <Link href={`/dashboard/admin/users/${user.id}`}>
+                                          <RefreshCw className="h-4 w-4 mr-2" />
+                                          Återaktivera / Redigera
+                                      </Link>
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground border-dashed border-2 rounded-md">
+                            Inga inaktiva konton och lediga anställningsnummer.  
+                        </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
             )}
           </CardContent>
         </Card>

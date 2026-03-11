@@ -19,7 +19,7 @@ Timelog är byggt på en modern, serverlös arkitektur med en noggrant utvald up
 
 *   **Firebase (BaaS):** Firebase valdes som Backend-as-a-Service för att hantera autentisering (Firebase Auth) och datalagring (Cloud Firestore). Detta eliminerar behovet av att bygga och underhålla en egen backend-server för databasdelen.
     *   **Frontend (Client SDK):** Används för prenumerationer i realtid och grundläggande dokumenthantering, skyddat av Firestore Security Rules.
-    *   **Backend (Admin SDK):** `firebase-admin` körs i Next.js API Routes för privilegierade operationer. Ett centralt exempel är att permanent radera användare: Frontend kan inte radera någons inloggningskonto av säkerhetsskäl. Vid radering görs istället ett anrop till `/api/admin/users/[id]` som använder Admin SDK för att radera användaren från Firebase Auth, varpå frontend raderar profildokumentet från Firestore. Detta frigör omedelbart anställningsnumret.
+    *   **Backend (Admin SDK):** `firebase-admin` körs i Next.js API Routes för privilegierade operationer. Ett centralt exempel är att mjuk-radera användare (`delete` bytts ut mot lösenords-scrambling): Frontend kan inte ändra säkerhetsuppgifter eller inloggningar på egen hand. Vid inaktivering av en användare görs istället ett anrop till `/api/admin/users/[id]` som använder Admin SDK för att nollställa (scrambla) användarens lösenord och tvinga en utloggning (revoke tokens). Därefter uppdaterar frontend profildokumentet i Firestore med status "Inactive", vilket omedelbart frigör anställningsnumret för nyrekrytering och stänger av all åtkomst för den gamla användaren.
 
 ### 2.2 Filstruktur
 
@@ -51,6 +51,7 @@ Datamodellen är designad med en dokument-orienterad strategi där den mesta dat
     *   **Beskrivning:** Huvudkollektionen som lagrar enskilda användarprofiler. `{profileId}` är identiskt med användarens Firebase Auth UID. Detta är roten för nästan all användarspecifik data.
     *   **Fält (urval):**
         *   `id`: `string` (UID)
+        *   `status`: `'Active' | 'Inactive'` (Indikerar om kontot är i bruk eller om numret är ledigt för rekrytering / återvinning)
         *   `firstName`, `lastName`: `string`
         *   `employeeId`: `string` (används för inloggning)
         *   `salaryValue`: `number | null`
@@ -117,6 +118,14 @@ Den mest envisa buggen i projektet var kopplingen till `Select`-komponenterna. L
     3.  `Select`'s `value`-prop **måste** kopplas till `field.value`.
 
 *   **Hantering av `null` i UI:** `Shadcn`'s `Select`-komponent kan inte hantera `null` som ett `value`. Detta skulle orsaka ett fel i React. Samtidigt returnerar vår databas `null` för tomma fält. Lösningen är att transformera värdet precis innan det skickas till komponenten: `value={field.value ?? ''}`. Denna "nullish coalescing operator" säkerställer att om `field.value` är `null` eller `undefined`, skickas en tom sträng (`''`) till `Select`-komponenten istället. Komponenten kan hantera en tom sträng utan att krascha och kommer då korrekt att visa sin `placeholder` ("Välj...").
+
+### 4.4 Användarhantering (Soft Delete & Återvinning)
+
+För att undvika att anställningsnummer för alltid blir obrukbara när användare slutar, har systemet en "mjuk raderings"-funktion ("Soft Delete").
+
+1.  **Inaktivering:** När ett konto tas bort ("Rensa & Inaktivera"), genererar backenden via `AdminAuth` ett 32-tecken långt kryptografiskt säkert sträng-lösenord och loggar ut eventuella existerande JWT-tokens för användaren. Frontend rensar sedan personens PII (namn, adress, lön, personnummer o.s.v.), ändrar förnamn till "Ledigt" och sätter `status: 'Inactive'`.
+2.  **Översikt:** I komponenten `UserManagement` visas "Aktiv Personal" och "Inaktiva Konton" (lediga nummer) i två separata flikar, separerade av respektives `status`.
+3.  **Återaktivering:** När en HR-administratör anställer någon ny på ett ledigt anställningsnummer, uppdateras de rensade fälten i Inaktiva Konton-fliken med personuppgifter via formuläret, ett nytt lösenord tvingas fram vid UI-sidan via en `PATCH`-begäran mot `/api/admin/users/[id]`, och statusen ändras till `Active`. Detta låter inloggnings-objektets UID finnas kvar i all oändlighet och undviker orphan-referenser kring `employeeId`-inloggningar som låser framtida rekryteringar.
 
 ---
 

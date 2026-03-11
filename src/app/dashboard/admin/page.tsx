@@ -46,13 +46,13 @@ export default function AdminPage() {
   const defaultTab = canHandleUsers ? "users" : (canApprovePayroll ? "payroll" : (canGenerateContracts ? "contracts" : undefined));
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex justify-between items-center">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Adminpanel</h2>
       </div>
       <AdminNotifications />
       <Tabs defaultValue={defaultTab} className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto justify-start">
           {canHandleUsers && <TabsTrigger value="users">Användarhantering</TabsTrigger>}
           {canApprovePayroll && <TabsTrigger value="payroll">Lönehantering</TabsTrigger>}
           {canGenerateContracts && <TabsTrigger value="contracts">Generera Avtal</TabsTrigger>}

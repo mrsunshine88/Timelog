@@ -307,7 +307,7 @@ export function PayrollManagement() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <CardTitle>Lönehantering</CardTitle>
           <CardDescription>Godkänn och exportera löneunderlag för {format(currentDate, 'MMMM yyyy', { locale: sv })}.</CardDescription>
@@ -325,17 +325,17 @@ export function PayrollManagement() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-end items-center gap-2 mb-4">
-             <Button onClick={handleApproveSelected} disabled={selectedUserIds.size === 0}> 
+        <div className="flex flex-col sm:flex-row sm:justify-end items-center gap-2 mb-4">
+             <Button onClick={handleApproveSelected} disabled={selectedUserIds.size === 0} className="w-full sm:w-auto"> 
                 <Lock className="mr-2 h-4 w-4" />
                 Godkänn valda
             </Button>
-            <Button onClick={handleExport} disabled={approvedUserIds.size === 0}> 
+            <Button onClick={handleExport} disabled={approvedUserIds.size === 0} className="w-full sm:w-auto"> 
                 <Download className="mr-2 h-4 w-4" />
                 Exportera lönefil (CSV)
             </Button>
         </div>
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>

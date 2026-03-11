@@ -303,8 +303,8 @@ export default function MinaSidorPage() {
   const pageTitle = adminViewingUserId ? `${targetUserProfile.firstName} ${targetUserProfile.lastName}'s Sidor` : 'Mina sidor';
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto w-full">
-       <div className="flex items-center justify-between space-y-2 py-4">
+    <div className="flex-1 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full">
+       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           {adminViewingUserId && <User className="h-8 w-8 text-muted-foreground" />}
           <h2 className="text-3xl font-bold tracking-tight">

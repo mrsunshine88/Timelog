@@ -95,6 +95,7 @@ export type UserProfile = {
     lastName: string;
     createdAt?: any;
     updatedAt?: any;
+    status?: 'Active' | 'Inactive';
 
     // Employment
     title?: string;

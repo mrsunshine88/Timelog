@@ -239,8 +239,8 @@ export default function LivePage() {
 
 
     return (
-        <div className="flex-1 space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-7xl mx-auto w-full">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight">{canViewCost ? 'Rapportcentral' : 'Live-vy'}</h2>
                     <p className="text-muted-foreground">

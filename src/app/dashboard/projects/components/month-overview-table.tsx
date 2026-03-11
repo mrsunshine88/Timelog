@@ -89,105 +89,107 @@ export function MonthOverviewTable({ rows, isEditable, onEdit, onDelete }: Month
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[80px]">Dag</TableHead>
-            <TableHead>Detaljer</TableHead>
-            {isEditable && (
-              <TableHead className="w-[80px] text-right">Åtgärd</TableHead>
-            )}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => {
-            const showWeek = row.weekNumber !== lastWeekNumber;
-            lastWeekNumber = row.weekNumber;
-            
-            const showDay = row.date !== lastDateStr;
-            lastDateStr = row.date;
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">Dag</TableHead>
+              <TableHead>Detaljer</TableHead>
+              {isEditable && (
+                <TableHead className="w-[80px] text-right">Åtgärd</TableHead>
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => {
+              const showWeek = row.weekNumber !== lastWeekNumber;
+              lastWeekNumber = row.weekNumber;
+              
+              const showDay = row.date !== lastDateStr;
+              lastDateStr = row.date;
 
-            return (
-              <Fragment key={row.id}>
-                {showWeek && (
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableCell
-                      colSpan={isEditable ? 3 : 2}
-                      className="py-2 font-bold text-muted-foreground"
-                    >
-                      Vecka {row.weekNumber}
-                    </TableCell>
-                  </TableRow>
-                )}
-                <TableRow
-                  className={cn(
-                    isEditable && 'group cursor-pointer',
-                    'hover:bg-muted/30'
+              return (
+                <Fragment key={row.id}>
+                  {showWeek && (
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableCell
+                        colSpan={isEditable ? 3 : 2}
+                        className="py-2 font-bold text-muted-foreground"
+                      >
+                        Vecka {row.weekNumber}
+                      </TableCell>
+                    </TableRow>
                   )}
-                  onClick={() => handleEditClick(row)}
-                >
-                  <TableCell
+                  <TableRow
                     className={cn(
-                      'font-medium w-[80px]',
-                      row.isWeekend && 'text-red-600'
+                      isEditable && 'group cursor-pointer',
+                      'hover:bg-muted/30'
                     )}
+                    onClick={() => handleEditClick(row)}
                   >
-                    {showDay ? row.dayName : ''}
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                       {(row.status !== 'Tom' && row.status !== 'Ledig') ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            {row.startTime && <span className="font-medium">{`${row.startTime} - ${row.endTime}`}</span>}
-                            <StatusBadge status={row.status} />
-                          </div>
-                          {row.project && (
-                              <div className="text-xs text-muted-foreground">
-                                  {row.project}
-                              </div>
-                          )}
-                        </>
-                      ) : (
-                        <StatusBadge status={row.status} />
+                    <TableCell
+                      className={cn(
+                        'font-medium w-[80px]',
+                        row.isWeekend && 'text-red-600'
                       )}
-                    </div>
-                  </TableCell>
+                    >
+                      {showDay ? row.dayName : ''}
+                    </TableCell>
 
-                  {isEditable && (
-                    <TableCell className="p-1">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditClick(row);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {(row.status !== 'Tom' && row.status !== 'Ledig') && (
-                            <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={(e) => handleDeleteClick(e, row)}
-                            >
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                         {(row.status !== 'Tom' && row.status !== 'Ledig') ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              {row.startTime && <span className="font-medium">{`${row.startTime} - ${row.endTime}`}</span>}
+                              <StatusBadge status={row.status} />
+                            </div>
+                            {row.project && (
+                                <div className="text-xs text-muted-foreground">
+                                    {row.project}
+                                </div>
+                            )}
+                          </>
+                        ) : (
+                          <StatusBadge status={row.status} />
                         )}
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              </Fragment>
-            );
-          })}
-        </TableBody>
-      </Table>
+
+                    {isEditable && (
+                      <TableCell className="p-1">
+                        <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(row);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {(row.status !== 'Tom' && row.status !== 'Ledig') && (
+                              <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={(e) => handleDeleteClick(e, row)}
+                              >
+                              <Trash2 className="h-4 w-4" />
+                              </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                </Fragment>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

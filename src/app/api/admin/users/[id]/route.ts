@@ -25,18 +25,20 @@ export async function DELETE(
       );
     }
 
-    // Delete the user from Firebase Authentication
-    // Note: We're not doing heavy token bearer validation here for simplicity as 
-    // real-world requires checking `request.headers.get('Authorization')`. 
-    // In our app, the path to click this button is already guarded by the admin UI state.
-    await adminAuth.deleteUser(userId);
+    // Instead of deleting, we randomize the password to lock out the old user
+    // This allows us to keep the Firebase Auth account and "Recycle" the employee ID/email
+    const randomPassword = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+      
+    await adminAuth.updateUser(userId, { password: randomPassword });
+    await adminAuth.revokeRefreshTokens(userId); // Ensure any active sessions are killed
 
     return NextResponse.json(
-      { message: 'User successfully deleted from Auth' },
+      { message: 'User locked out and password randomized safely' },
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('Error deleting user from Firebase Auth:', error);
+    console.error('Error locking out user from Firebase Auth:', error);
     
     // Depending on the exact error (like user-not-found), we might not want to 500
     if (error.code === 'auth/user-not-found') {
@@ -51,7 +53,7 @@ export async function DELETE(
         (error.message && error.message.includes('Project Id')) || 
         (error.message && error.message.includes('default credentials'))) {
         return NextResponse.json(
-          { error: 'Kunde inte radera kontot', details: 'Din lokala utvecklingsmiljö saknar behörighet (Service Account) för att radera användare permanent från servern. Kontot är kvar i Firebase Auth, radera det manuellt i Firebase Console.' },
+          { error: 'Kunde inte låsa kontot', details: 'Din lokala utvecklingsmiljö saknar behörighet. Kontot uppdaterades i Firestore men Firebase Auth ignoreras.' },
           { status: 500 }
         );
     }
@@ -62,3 +64,30 @@ export async function DELETE(
     );
   }
 }
+
+export async function PATCH(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
+  ) {
+    try {
+      const resolvedParams = await params;
+      const userId = resolvedParams.id;
+      const { password } = await request.json();
+  
+      if (!userId || !password) {
+        return NextResponse.json({ error: 'User ID and password are required' }, { status: 400 });
+      }
+  
+      if (!adminAuth) {
+        return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
+      }
+  
+      await adminAuth.updateUser(userId, { password });
+      await adminAuth.revokeRefreshTokens(userId);
+  
+      return NextResponse.json({ message: 'User password updated successfully' }, { status: 200 });
+    } catch (error: any) {
+      console.error('Error updating user password:', error);
+      return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+    }
+  }

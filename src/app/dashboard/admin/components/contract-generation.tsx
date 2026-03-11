@@ -162,7 +162,7 @@ export function ContractGeneration() {
             Sök på namn eller anställningsnummer för den person du
             vill skapa ett avtal för.
           </p>
-          <div className="flex w-full max-w-sm items-center space-x-2">
+          <div className="flex flex-col sm:flex-row w-full max-w-sm sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <div className="grid flex-1 gap-2">
               <Label htmlFor="employeeId" className="sr-only">
                 Namn eller anställningsnummer
@@ -175,7 +175,7 @@ export function ContractGeneration() {
                 disabled={!!searchedUser}
               />
             </div>
-            <Button type="button" onClick={handleSearch} disabled={isSearching || !!searchedUser}>
+            <Button type="button" onClick={handleSearch} disabled={isSearching || !!searchedUser} className="w-full sm:w-auto">
               {isSearching ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (

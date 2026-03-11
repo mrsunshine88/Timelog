@@ -225,31 +225,47 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
     } else { // Editing existing user
         if (!userId) return;
 
-        const profileData = { ...dataToSave, updatedAt: serverTimestamp() };
+        if (userProfile?.status === 'Inactive' && (!values.password || values.password.length < 6)) {
+            form.setError('password', { message: 'Du måste sätta ett nytt lösenord (minst 6 tecken) för att aktivera det lediga kontot.' });
+            return;
+        }
+
+        const profileData = { ...dataToSave, updatedAt: serverTimestamp(), status: 'Active' };
         delete (profileData as any).password;
         
         try {
+            if (values.password) {
+                const patchRes = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: values.password }),
+                });
+                if (!patchRes.ok) {
+                    throw new Error("Kunde inte uppdatera lösenordet i inloggningssystemet.");
+                }
+            }
+
             const docRef = doc(firestore, 'profiles', userId);
             await updateDoc(docRef, profileData);
             
-            toast({ title: "Profil uppdaterad", description: "Ändringarna har sparats." });
+            toast({ title: userProfile?.status === 'Inactive' ? "Konto aktiverat" : "Profil uppdaterad", description: "Ändringarna har sparats." });
             router.push('/dashboard/admin');
             router.refresh();
         } catch (error: any) {
             console.error("Error updating user:", error);
-            toast({ variant: "destructive", title: "Fel", description: "Kunde inte spara ändringarna." });
+            toast({ variant: "destructive", title: "Fel", description: error.message || "Kunde inte spara ändringarna." });
         }
     }
   };
   
-  const handlePermanentDelete = async () => {
+  const handleDelete = async () => {
     if (!userId || !userProfile) return;
     setIsDeleting(true);
 
     try {
         let authDeleteSuccess = true;
         
-        // 1. Try to delete the user from Firebase Authentication
+        // 1. Try to lock the user out from Firebase Authentication (scrambling password)
         try {
             const response = await fetch(`/api/admin/users/${userId}`, {
                 method: 'DELETE',
@@ -257,26 +273,42 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
 
             if (!response.ok) {
                 authDeleteSuccess = false;
-                console.warn("Could not delete from Firebase Auth, proceeding to delete profile anyway...");
+                console.warn("Could not scramble Firebase Auth password, proceeding to update profile anyway...");
             }
         } catch (e) {
             authDeleteSuccess = false;
             console.warn("Network error reaching Auth delete endpoint:", e);
         }
 
-        // 2. Delete the user's profile from Firestore (This frees the Employee ID)
+        // 2. Soft delete the user's profile from Firestore (This frees the Employee ID)
         const docRef = doc(firestore, 'profiles', userId);
-        await deleteDoc(docRef);
+        const inactiveData = {
+            status: 'Inactive',
+            firstName: '',
+            lastName: 'Ledigt',
+            email: null,
+            phone: null,
+            ssn: null,
+            address: null,
+            postalCode: null,
+            city: null,
+            salaryValue: null,
+            employmentType: null,
+            workHoursType: null,
+            title: null,
+            updatedAt: serverTimestamp()
+        };
+        await updateDoc(docRef, inactiveData);
 
         if (authDeleteSuccess) {
             toast({
-                title: "Användare Raderad",
-                description: `${userProfile.firstName} ${userProfile.lastName} har raderats helt från systemet. Anställningsnumret är nu ledigt.`,
+                title: "Konto Inaktiverat & Rensat",
+                description: `Personuppgifterna har raderats och anställningsnumret är nu ledigt för återanvändning. Den gamla användaren kan inte längre logga in.`,
             });
         } else {
             toast({
-                title: "Profil raderad (Lokal miljö)",
-                description: `${userProfile.firstName}s profil raderades och numret blev ledigt! (E-posten är dock kvar i Firebase Auth för tillfället då du testar lokalt)`,
+                title: "Profil rensad (Lokal miljö)",
+                description: `Profilen rensades och numret blev ledigt! (E-posten är dock kvar med sitt gamla lösenord för tillfället då du testar lokalt)`,
             });
         }
         
@@ -284,11 +316,11 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
         router.refresh();
 
     } catch (error: any) {
-        console.error("Error during profile delete:", error);
+        console.error("Error during profile soft-delete:", error);
         toast({
             variant: "destructive",
-            title: "Fel vid radering av profil",
-            description: error.message || "Kunde inte radera profil-dokumentet. Se konsolen för mer info."
+            title: "Fel vid rensning av profil",
+            description: error.message || "Kunde inte uppdatera profil-dokumentet. Se konsolen för mer info."
         });
     } finally {
         setIsDeleting(false);
@@ -329,14 +361,16 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
                                 <FormMessage />
                             </FormItem>
                         )} />
-                        {isNewUser && <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormField control={form.control} name="password" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Lösenord</FormLabel>
+                                <FormLabel>{isNewUser || userProfile?.status === 'Inactive' ? 'Lösenord' : 'Nytt lösenord'}</FormLabel>
                                 <FormControl><Input type="password" {...field} value={field.value ?? ''} /></FormControl>
-                                <FormDescription>Minst 6 tecken.</FormDescription>
+                                <FormDescription>
+                                    {isNewUser ? 'Minst 6 tecken.' : userProfile?.status === 'Inactive' ? 'Krävs för att återaktivera. Minst 6 tecken.' : 'Lämna tomt för att behålla befintligt lösenord.'}
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
-                        )} />}
+                        )} />
                     </div>
                 </CardContent>
             </Card>
@@ -627,37 +661,37 @@ function UserEditFormInner({ userProfile, userId, isNewUser }: { userProfile: Us
             </Button>
         </div>
 
-        {!isNewUser && (
+        {!isNewUser && userProfile?.status !== 'Inactive' && (
             <Card className="border-destructive mt-8">
                 <CardHeader>
-                    <CardTitle className="text-destructive">Farozon</CardTitle>
-                    <CardDescription>Denna åtgärd raderar användaren och all tillhörande data permanent. Anställningsnumret blir ledigt.</CardDescription>
+                    <CardTitle className="text-destructive">Frigör Anställningsnummer</CardTitle>
+                    <CardDescription>Rensar personuppgifter och inaktiverar kontot. Anställningsnumret blir ledigt för en ny medarbetare.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="destructive" disabled={userProfile?.employeeId === '64112' || form.formState.isSubmitting || isDeleting}>
                                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                                Radera Användare Permanent
+                                Rensa & Inaktivera
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Är du helt säker?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Du är på väg att permanent radera denna användare. All data, inklusive tidrapporter och profildata, kommer att raderas oåterkalleligt.
+                                    Du är på väg att rensa all data och spärra inloggningen för detta konto.
                                     <br/><br/>
-                                    <span className='font-bold text-destructive'>Användarens inloggningskonto i systemet kommer att raderas helt, och anställningsnumret blir omedelbart ledigt för återanvändning.</span>
+                                    <span className='font-bold text-destructive'>Användarens uppgifter raderas och lösenordet scrambleas. Anställningsnumret hamnar under &quot;Inaktiva konton&quot; redo att tilldelas en ny person.</span>
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                                <AlertDialogAction onClick={handlePermanentDelete} className="bg-destructive hover:bg-destructive/90">Ja, radera permanent</AlertDialogAction>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Ja, rensa och inaktivera</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
                     {userProfile?.employeeId === '64112' && (
-                        <p className="text-sm text-muted-foreground mt-2">Super-admin kontot kan inte raderas.</p>
+                        <p className="text-sm text-muted-foreground mt-2">Super-admin kontot kan inte inaktiveras.</p>
                     )}
                 </CardContent>
             </Card>

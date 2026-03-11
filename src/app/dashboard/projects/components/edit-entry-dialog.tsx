@@ -23,6 +23,7 @@ import type { TimeEntry, TimeEntryStatus, FirestoreTimeEntry } from '@/lib/types
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
 
 interface EditEntryDialogProps {
   entry: TimeEntry | null;
@@ -75,9 +76,22 @@ export function EditEntryDialog({
     }
   }, [entry]);
 
+  const { toast } = useToast();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!entry) return;
+
+    if (!isOpenShift && startTime && endTime) {
+      if (endTime < startTime) {
+        toast({
+          title: "Ogiltig tid",
+          description: "Sluttiden kan inte vara före starttiden.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     const entryDate = entry.date || format(new Date(), 'yyyy-MM-dd');
     
