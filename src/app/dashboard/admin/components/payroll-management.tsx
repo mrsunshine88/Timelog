@@ -138,10 +138,15 @@ export function PayrollManagement() {
 
   const usersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, 'profiles'), where('status', '!=', 'Inactive'));
+    return query(collection(firestore, 'profiles'));
   }, [firestore]);
 
-  const { data: users, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
+  const { data: usersData, isLoading: isLoadingUsers } = useCollection<UserProfile>(usersQuery);
+
+  const users = useMemo(() => {
+    if (!usersData) return null;
+    return usersData.filter(u => u.status !== 'Inactive');
+  }, [usersData]);
 
   useEffect(() => {
     // Reset selections when month changes

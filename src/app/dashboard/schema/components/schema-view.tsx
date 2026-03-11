@@ -74,7 +74,7 @@ export function SchemaView() {
   const usersQuery = useMemoFirebase(() => {
     if (!firestore || isAuthLoading) return null;
     if (canHandleSchema) {
-      return query(collection(firestore, 'profiles'), where('status', '!=', 'Inactive'));
+      return query(collection(firestore, 'profiles'));
     }
     if (currentUserProfile) {
       return query(collection(firestore, 'profiles'), where('__name__', '==', currentUserProfile.id));
@@ -86,7 +86,9 @@ export function SchemaView() {
 
   const users = useMemo(() => {
     if (!usersData) return null;
-    return [...usersData].sort((a, b) => 
+    return [...usersData]
+        .filter(u => u.status !== 'Inactive')
+        .sort((a, b) => 
         `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
     );
   }, [usersData]);
