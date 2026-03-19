@@ -1,12 +1,14 @@
 name = "timelog2"
-compatibility_flags = [ "nodejs_compat" ]
+pages_build_output_dir = ".next"
 
 [build]
 command = "npm run build"
-output_dir = ".next"
 
 [vars]
 apiKey = "AIzaSyCJyfw-oA4YtdLrVvFdrhFFjkXEUj99Ifo"
 projectId = "studio-8099195455-af266"
 authDomain = "studio-8099195455-af266.firebaseapp.com"
 databaseURL = "https://studio-8099195455-af266.firebaseio.com"
+
+[compatibility_flags]
+compatibility_flags = [ "nodejs_compat" ]
