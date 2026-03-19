@@ -1,3 +1,6 @@
+# Denna rad fattas och gör att Cloudflare ignorerar hela filen!
+pages_build_output_dir = ".next"
+
 compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
