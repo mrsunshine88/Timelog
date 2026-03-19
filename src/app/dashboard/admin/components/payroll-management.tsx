@@ -226,49 +226,42 @@ export function PayrollManagement() {
         return;
     }
 
-    const decimalSeparator = ',';
-    const headers = [
-        "Anstallningsnummer",
-        "Period",
-        "Loneart_Kod",
-        "Antal_Timmar",
-        "Beskrivning"
-    ];
-
     const period = format(currentDate, 'yyyy-MM');
-    const monthDescription = format(currentDate, 'MMMM yyyy', { locale: sv });
+    let xmlTransactions = '';
 
-    const dataRows: string[] = [];
+    const addTransaction = (employeeId: string, wageCode: string, quantity: number) => {
+      const formattedQty = quantity.toFixed(2);
+      xmlTransactions += `    <SalaryTransaction>\n      <EmployeeId>${employeeId}</EmployeeId>\n      <WageCode>${wageCode}</WageCode>\n      <Quantity>${formattedQty}</Quantity>\n      <Period>${period}</Period>\n    </SalaryTransaction>\n`;
+    };
 
     approvedData.forEach(userSummary => {
-        const baseRow = [userSummary.employeeId, period];
-        const formatHours = (hours: number) => hours.toFixed(2).replace('.', decimalSeparator);
+        const empId = userSummary.employeeId;
 
         const regularHours = userSummary.workedHours - userSummary.overtime;
         if (regularHours > 0) {
-            dataRows.push([...baseRow, '10', formatHours(regularHours), `Ordinarie tid ${monthDescription}`].join(';'));
+            addTransaction(empId, '10', regularHours);
         }
         
         if (userSummary.overtime > 0) {
-             dataRows.push([...baseRow, '50', formatHours(userSummary.overtime), `Övertid ${monthDescription}`].join(';'));
+             addTransaction(empId, '50', userSummary.overtime);
         }
         
         if (userSummary.sickHours > 0) {
-            dataRows.push([...baseRow, 'SJU', formatHours(userSummary.sickHours), `Sjukfrånvaro ${monthDescription}`].join(';'));
+            addTransaction(empId, 'SJU', userSummary.sickHours);
         }
         if (userSummary.vabHours > 0) {
-            dataRows.push([...baseRow, 'VAB', formatHours(userSummary.vabHours), `Vård av barn ${monthDescription}`].join(';'));
+            addTransaction(empId, 'VAB', userSummary.vabHours);
         }
         if (userSummary.vacationDays > 0) {
             const vacationHours = userSummary.vacationDays * 8;
-            dataRows.push([...baseRow, 'SEM', formatHours(vacationHours), `Semester ${monthDescription}`].join(';'));
+            addTransaction(empId, 'SEM', vacationHours);
         }
         if (userSummary.otherAbsenceHours > 0) {
-             dataRows.push([...baseRow, 'OVR', formatHours(userSummary.otherAbsenceHours), `Övrig frånvaro ${monthDescription}`].join(';'));
+             addTransaction(empId, 'OVR', userSummary.otherAbsenceHours);
         }
     });
 
-    if (dataRows.length === 0) {
+    if (xmlTransactions.length === 0) {
         toast({
             title: "Ingen data att exportera",
             description: "De godkända lönerna har inga timmar att rapportera för den valda perioden."
@@ -276,18 +269,15 @@ export function PayrollManagement() {
         return;
     }
 
-    const csvData = headers.join(";") + "\n" + dataRows.join("\n");
-    // Prepend BOM for UTF-8 to ensure Excel compatibility with Swedish characters
-    const bom = "\uFEFF";
-    const csvContent = bom + csvData;
+    const xmlContent = `<?xml version="1.0" encoding="utf-8"?>\n<PAXml version="2.0">\n  <Header>\n    <ProgramName>Timelog</ProgramName>\n  </Header>\n  <SalaryTransactions>\n${xmlTransactions}  </SalaryTransactions>\n</PAXml>`;
     
     // Create a Blob for better handling of file types and encoding
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([xmlContent], { type: 'application/xml;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `lonefil_${period}.csv`);
+    link.setAttribute("download", `lonefil_${period}.xml`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -295,7 +285,7 @@ export function PayrollManagement() {
     
     toast({
         title: "Export slutförd",
-        description: `En lönefil för ${period} har laddats ner.`
+        description: `En lönefil (PAXml) för ${period} har laddats ner.`
     });
   };
 
@@ -338,7 +328,7 @@ export function PayrollManagement() {
             </Button>
             <Button onClick={handleExport} disabled={approvedUserIds.size === 0} className="w-full sm:w-auto"> 
                 <Download className="mr-2 h-4 w-4" />
-                Exportera lönefil (CSV)
+                Exportera lönefil (PAXml)
             </Button>
         </div>
         <div className="rounded-md border overflow-x-auto">
