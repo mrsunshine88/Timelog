@@ -1,10 +1,12 @@
-# Denna rad fattas och gör att Cloudflare ignorerar hela filen!
+#:schema node_modules/wrangler/config-schema.json
+name = "timelog2"
 pages_build_output_dir = ".next"
-
-compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
 apiKey = "AIzaSyCJyfw-oA4YtdLrVvFdrhFFjkXEUj99Ifo"
 projectId = "studio-8099195455-af266"
 authDomain = "studio-8099195455-af266.firebaseapp.com"
 databaseURL = "https://studio-8099195455-af266.firebaseio.com"
+
+[compatibility_flags]
+compatibility_flags = [ "nodejs_compat" ]
