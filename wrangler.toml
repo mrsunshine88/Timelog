@@ -1,7 +1,9 @@
 name = "timelog2"
-pages_build_output_dir = ".next"
-build_command = "npm run build"
 compatibility_flags = [ "nodejs_compat" ]
+
+[build]
+command = "npm run build"
+path = ".next"
 
 [vars]
 apiKey = "AIzaSyCJyfw-oA4YtdLrVvFdrhFFjkXEUj99Ifo"
