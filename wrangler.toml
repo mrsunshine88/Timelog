@@ -3,7 +3,7 @@ compatibility_flags = [ "nodejs_compat" ]
 
 [build]
 command = "npm run build"
-path = ".next"
+output_dir = ".next"
 
 [vars]
 apiKey = "AIzaSyCJyfw-oA4YtdLrVvFdrhFFjkXEUj99Ifo"
