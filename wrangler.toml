@@ -1,9 +1,0 @@
-name = "timelog2"
-pages_build_output_dir = ".vercel/output/static"
-compatibility_flags = [ "nodejs_compat" ]
-
-[vars]
-apiKey = "AIzaSyCJyfw-oA4YtdLrVvFdrhFFjkXEUj99Ifo"
-projectId = "studio-8099195455-af266"
-authDomain = "studio-8099195455-af266.firebaseapp.com"
-databaseURL = "https://studio-8099195455-af266.firebaseio.com"

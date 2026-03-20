@@ -2,7 +2,7 @@ import { UserEditForm } from '@/app/dashboard/admin/users/components/user-edit-f
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-export const runtime = 'edge';
+
 export default async function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const isNew = resolvedParams.id === 'new';

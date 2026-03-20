@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '@/lib/firebase-admin';
-export const runtime = 'edge';
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
